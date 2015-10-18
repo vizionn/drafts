@@ -1,0 +1,357 @@
+<html>
+<head>
+	<meta charset="utf-8">
+	<title></title>
+	<style type="text/css">
+		canvas{
+			margin: auto;
+			position: absolute;
+			left: 0;
+			top: 0;
+			right: 0;
+			bottom: 0;
+		}
+	</style>
+</head>
+<body>
+	
+<canvas id="canvas">Your browser doesn't support canvas</canvas>
+
+<script type="text/javascript">
+var canvas = document.getElementById('canvas');
+var ctx = canvas.getContext('2d');
+var gridColor = '#000000';
+var cellColor = '#00ff00'; 
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+var w = 10; // width of each square
+var rows = canvas.height/w;
+var columns = canvas.width/w;
+var objects = []; // holds all information about the squares (e.g.: alive or dead)
+var defaultColor = 'black';
+var ticks = 0;
+
+function init()
+{
+	populateObjectsArray();
+
+	/*initial pattern:
+	throw the initial patterns in initialPatterns array!
+	Check end of code for some cool patterns.
+	*/
+	initialPatterns = []; 
+	/*use concat to combine more than one combination*/
+
+	for(var i = 0; i < initialPatterns.length; i++)
+	{
+		patterns.callCoordinates(initialPatterns[i]);
+	}
+
+	loop();
+	
+	document.addEventListener("click", clickToChangeState);
+	document.addEventListener('keydown', keyDown, false);
+	document.addEventListener('keyup', keyUp, false);
+}
+	
+function loop()
+{
+	if(ticks%1==0)
+	{
+		drawGrid();
+
+		if(custom_enter)
+		{
+			changeCurrentStateIfNecessary();	
+		}
+
+	}
+	ticks++;
+	requestAnimationFrame(loop);
+}
+
+function drawGrid()
+{
+	ctx.lineWidth = 0.1;
+	ctx.beginPath();
+	for(var i = 0; i < rows ; i++)
+	{
+		for(var j = 0; j<columns; j++)
+		{
+			if(objects[i][j].state == 1)
+			{
+				ctx.fillStyle = cellColor;
+				ctx.strokeStyle = cellColor;
+				ctx.fillRect(j*w, i*w, w, w);
+			} 
+			else //state is 0 (dead)
+			{
+				ctx.fillStyle = gridColor;
+				ctx.strokeStyle = 'white';
+				ctx.rect(j*w, i*w, w, w);
+			}
+		}
+	}
+	ctx.closePath();
+	ctx.fill();
+	ctx.stroke();
+}
+
+function populateObjectsArray()
+{
+	for(var i = 0; i < rows + 2 ; i++) /*Added 2 so the for loop in 
+	changeCurrentStateIfNecessary works! If not, the loop will go
+until an undefined array element*/
+	{
+		objects.push([]);
+		for(var j = 0; j<columns + 2; j++)
+		{
+			objects[i].push(new createSquareObjects(i, j, 'hello, i am object ('+i+','+j+')!!!'));
+		}
+	}
+}
+
+function createSquareObjects(rowIndex, colIndex, message)
+{
+	this.state = 0 // dead = 0, alive = 1
+	this.nextState = undefined;
+	this.rowIndex = rowIndex;
+	this.colIndex = colIndex;
+	this.message = message;
+}
+
+/*We need to detect if the cell will be alive or dead at the next moment. detectNextState will do this.*/
+function changeCurrentStateIfNecessary()
+{
+	/*OBS: PROBLEMA: TEM QUE ESPERAR O LOOP INTEIRO TERMINAR PARA
+	ATUALIZAR O ESTADO DAS CÉLULAS*/
+	for(var i = 1; i < rows-1; i++)
+	{
+		for(var j = 1; j<columns-1; j++)
+		{
+			var totalNeighborsAlive = 0;
+
+			if(objects[i-1][j-1].state == 1){totalNeighborsAlive++;}
+			if(objects[i][j-1].state == 1){totalNeighborsAlive++;}
+			if(objects[i+1][j-1].state == 1){totalNeighborsAlive++;}
+			if(objects[i-1][j].state == 1){totalNeighborsAlive++;}
+			if(objects[i+1][j].state == 1){totalNeighborsAlive++;}
+			if(objects[i-1][j+1].state == 1){totalNeighborsAlive++;}
+			if(objects[i][j+1].state == 1){totalNeighborsAlive++;}
+			if(objects[i+1][j+1].state == 1){totalNeighborsAlive++;}
+
+			if(totalNeighborsAlive > 3)
+			{
+				objects[i][j].nextState = 0;
+			}
+			if(totalNeighborsAlive == 3)
+			{
+				objects[i][j].nextState = 1;
+			}
+			if(totalNeighborsAlive == 2)
+			{
+				objects[i][j].nextState = objects[i][j].state;
+			}
+			if(totalNeighborsAlive < 2)
+			{
+				objects[i][j].nextState = 0;
+			}
+
+		}
+	}
+
+	for(var i = 1; i < rows ; i++)
+	{
+		for(var j = 1; j<columns; j++)
+		{
+			objects[i][j].state = objects[i][j].nextState;
+		}
+	}
+}
+
+function clickToChangeState()
+{
+	mouseX = event.clientX;
+	mouseY = event.clientY;
+
+	colIndexOfTheCellToChange = Math.floor(mouseX/w); // Remember that the column is defined by the x coordinate, not the y (height)!
+	rowIndexOfTheCellToChange = Math.floor(mouseY/w);
+
+	if(objects[rowIndexOfTheCellToChange][colIndexOfTheCellToChange].state == 0)
+	{
+	objects[rowIndexOfTheCellToChange][colIndexOfTheCellToChange].state = 1;
+	}else{
+		objects[rowIndexOfTheCellToChange][colIndexOfTheCellToChange].state = 0;
+	}
+}
+
+var patterns = {
+
+	callCoordinates:function(c)
+	{
+		for( var i = 0; i< c.length; i++)
+		{
+			{
+				objects[c[i][0]][c[i][1]].state = 1;
+			}
+		}
+	},
+
+	type1:function()
+	{
+		objects[50][70].state = 1;
+		objects[51][70].state = 1;
+		objects[52][70].state = 1;
+
+		objects[53][70].state = 1;
+		objects[54][70].state = 1;
+		objects[55][70].state = 1;
+
+		objects[28][40].state = 1;
+		objects[29][40].state = 1;
+		objects[30][40].state = 1;
+	},
+
+	type2:function()
+	{
+		objects[50][70].state = 1;
+		objects[51][70].state = 1;
+		objects[52][70].state = 1;
+
+		objects[50][74].state = 1;
+		objects[51][74].state = 1;
+		objects[52][74].state = 1;
+
+		objects[49][71].state = 1;
+		objects[49][72].state = 1;
+		objects[49][73].state = 1;
+
+		objects[53][71].state = 1;
+		objects[53][72].state = 1;
+		objects[53][73].state = 1;
+	},
+
+	glider:function(x,y)
+	{
+		return [[x,y],[x+1,y+1],[x+2,y+1],[x+2,y],[x+2,y-1]];
+	},
+
+	square:function(x,y)
+	{
+		return [[x,y],[x+1,y],[x,y+1],[x+1,y+1]];
+	},
+
+	gliderFactoryPart1:function(x,y)
+	{
+		return[[x,y],
+		[x,y+1],
+		[x+1,y-1],
+		[x+2,y-2],
+		[x+3,y-2],
+		[x+4,y-2],
+		[x+5,y-1],
+		[x+6,y],
+		[x+6,y+1],
+		[x+3,y+2],
+		[x+1,y+3],
+		[x+2,y+4],
+		[x+3,y+4],
+		[x+4,y+4],
+		[x+3,y+5],
+		[x+5,y+3]
+		]
+	},
+
+	gliderFactoryPart2:function(x,y)
+	{
+		return [
+		[x,y],
+		[x+1,y],
+		[x+1,y-2],
+		[x+2,y-3],
+		[x+3,y-3],
+		[x+4,y-3],
+		[x+2,y-4],
+		[x+3,y-4],
+		[x+4,y-4],
+		[x+5,y-2],
+		[x+5,y],
+		[x+6,y]
+		]
+	}
+}
+
+var combinations = {
+
+	comb1:[patterns.square(30-20,30-28),patterns.glider(15,2),
+		patterns.glider(20,3),
+		patterns.glider(6,2),
+		patterns.gliderFactoryPart1(7,4),
+		patterns.gliderFactoryPart2(20,7)],
+
+	gliderFactory:[patterns.square(30-20,30-28), 
+		patterns.gliderFactoryPart1(27-20,42-28), 
+		patterns.gliderFactoryPart2(25-20,54-28),
+		patterns.square(27-20,64-28)],
+
+	comb3:[patterns.square(30-20,30-28), 
+		patterns.gliderFactoryPart1(27-20,42-28), 
+		patterns.gliderFactoryPart2(25-20,54-28),
+		patterns.gliderFactoryPart2(40-20,54-28),
+		patterns.gliderFactoryPart2(50-20,54-28),
+		patterns.square(27-20,64-28)],
+
+	comb4:[patterns.square(30-20+50,30-28+50), 
+		patterns.gliderFactoryPart1(27-20+50,42-28+50), 
+		patterns.gliderFactoryPart2(25-20+50,54-28+50),
+		patterns.gliderFactoryPart2(40-20+50,54-28+50),
+		patterns.gliderFactoryPart2(50-20+50,54-28+50),
+		patterns.square(27-20+50,64-28+50)],
+
+	comb5:[patterns.square(30-20+20,30-28+20), 
+		patterns.gliderFactoryPart1(27-20+20,42-28+20), 
+		patterns.gliderFactoryPart2(25-20+20,54-28+20),
+		patterns.square(27-20+20,64-28+20)],
+}
+
+/* input handlers*/
+var rightKey = false;
+var leftKey = false;
+var upKey = false;
+var downKey = false;
+var 
+custom_z = false,
+custom_w = false,
+custom_s = false,
+custom_enter = false
+;
+
+function keyDown(event){
+	switch(event.keyCode){
+		// enter
+		case 13:
+			custom_enter = true;
+		break;
+	}
+
+}
+
+function keyUp(event){
+	switch(event.keyCode){
+		// enter
+		case 13:
+			custom_enter = false;
+		break;
+	}
+
+}
+
+/* Finally calling the function init to initialize all this shit */
+window.onload = init();
+
+</script>
+</body>
+
+</html>
